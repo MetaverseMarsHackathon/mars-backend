@@ -45,12 +45,13 @@ public class ReviewService {
                 .map(QuestionResponse::getQuestionText)
                 .collect(Collectors.toList());
         
-        // 모든 문제를 맞춘 경우 축하 메시지 반환
+        // 모든 문제를 맞춘 경우 축하 메시지 반환 (리치텍스트 형식)
         if (incorrectQuestions.isEmpty()) {
+            String richTextMessage = "<size=32><b>축하합니다!</b></size>\n\n모든 문제를 정확하게 맞혔습니다.";
+            
             return ReviewContentResponse.builder()
                     .incorrectQuestions(List.of())
-                    .reviewContent(new ReviewContentResponse.ReviewContent(
-                            "축하합니다! 모든 문제를 정확하게 맞혔습니다."))
+                    .reviewContent(new ReviewContentResponse.ReviewContent(richTextMessage))
                     .build();
         }
         
@@ -58,7 +59,7 @@ public class ReviewService {
         ReviewContent existingReview = reviewContentRepository.findByGameSession(gameSession).orElse(null);
         
         if (existingReview != null) {
-            // 기존 리뷰 컨텐츠 반환
+            // 기존 저장된 콘텐츠 반환
             return ReviewContentResponse.builder()
                     .incorrectQuestions(incorrectQuestions)
                     .reviewContent(new ReviewContentResponse.ReviewContent(
@@ -70,41 +71,38 @@ public class ReviewService {
         AIReviewRequest aiRequest = new AIReviewRequest(incorrectQuestions);
         AIReviewResponse aiResponse = aiClientService.generateReview(aiRequest);
         
-        // AI 응답에서 설명 합치기 (마크다운 형식으로 개선)
-        StringBuilder formattedContent = new StringBuilder();
-        formattedContent.append("# 화성 탐사 복습 노트\n\n");
-        formattedContent.append("틀린 문제에 대한 추가 설명입니다:\n\n");
+        // AI 응답을 바로 유니티 리치텍스트 형식으로 변환
+        StringBuilder richTextContent = new StringBuilder();
+        richTextContent.append("<size=32><b>화성 탐사 복습 노트</b></size>\n\n");
+        richTextContent.append("틀린 문제에 대한 추가 설명입니다:\n\n");
         
-        // 각 설명에 번호와 마크다운 형식 적용
+        // 각 설명에 번호와 리치텍스트 형식 적용
         int index = 1;
         for (ExplanationItem result : aiResponse.getResults()) {
-            formattedContent.append("## ").append(index).append(". ").append(result.getExplanation()).append("\n\n");
+            // 번호와 제목 형식 리치텍스트로 추가
+            richTextContent.append("<size=24><b>").append(index).append(". </b></size>");
+            
+            // AI 응답 그대로 추가
+            richTextContent.append(result.getExplanation()).append("\n\n");
             index++;
         }
         
-        // 추가 학습 제안
-        formattedContent.append("## 추가 학습 제안\n\n");
-        formattedContent.append("화성에 대해 더 알아보고 싶다면 다음 주제들을 찾아보세요:\n\n");
-        formattedContent.append("- 화성의 지질학적 특성\n");
-        formattedContent.append("- 화성 탐사 역사\n");
-        formattedContent.append("- 화성 생명체 탐사 계획\n");
+        String finalContent = richTextContent.toString();
         
-        String combinedExplanations = formattedContent.toString();
-        
-        // 복습 컨텐츠 저장
+        // 리치텍스트 형식으로 DB에 저장
         ReviewContent reviewContent = ReviewContent.builder()
                 .gameSession(gameSession)
-                .content(combinedExplanations)
+                .content(finalContent)
                 .generatedAt(LocalDateTime.now())
                 .build();
         
         reviewContentRepository.save(reviewContent);
         
-        // 응답 반환
+        // 리치텍스트 형식 그대로 응답 반환
         return ReviewContentResponse.builder()
                 .incorrectQuestions(incorrectQuestions)
                 .reviewContent(new ReviewContentResponse.ReviewContent(
-                        combinedExplanations
+                        finalContent
                 ))
                 .build();
     }
