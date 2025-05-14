@@ -2,6 +2,7 @@ package com.hackathon.marsgame.service;
 
 import com.hackathon.marsgame.dto.AIReviewRequest;
 import com.hackathon.marsgame.dto.AIReviewResponse;
+import com.hackathon.marsgame.dto.ExplanationItem;
 import com.hackathon.marsgame.dto.ReviewContentResponse;
 import com.hackathon.marsgame.entity.GameSession;
 import com.hackathon.marsgame.entity.QuestionResponse;

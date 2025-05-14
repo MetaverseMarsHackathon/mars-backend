@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>유니티 연동 테스트</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #4CAF50;
+            margin-bottom: 30px;
+        }
+        h2 {
+            color: #2196F3;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+            margin-top: 30px;
+        }
+        .section {
+            margin-bottom: 30px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        input[type="text"],
+        input[type="password"],
+        textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-family: inherit;
+            font-size: 14px;
+        }
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 15px;
+            padding: 15px;
+            background-color: #e8f5e9;
+            border-radius: 4px;
+            border-left: 5px solid #4CAF50;
+        }
+        .error {
+            margin-top: 15px;
+            padding: 15px;
+            background-color: #ffebee;
+            border-radius: 4px;
+            border-left: 5px solid #f44336;
+        }
+        .hidden {
+            display: none;
+        }
+        .buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-start;
+        }
+        pre {
+            background-color: #f5f5f5;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>화성 탐사 게임 - 유니티 연동 테스트</h1>
+        
+        <div class="section">
+            <h2>1. 로그인 테스트</h2>
+            <div class="form-group">
+                <label for="username">사용자 이름:</label>
+                <input type="text" id="username" value="player1">
+            </div>
+            <div class="form-group">
+                <label for="password">비밀번호:</label>
+                <input type="password" id="password" value="password123">
+            </div>
+            <button id="btn-login">로그인</button>
+            <div id="login-result" class="result hidden"></div>
+            <div id="login-error" class="error hidden"></div>
+        </div>
+        
+        <div class="section">
+            <h2>2. 문제 응답 테스트</h2>
+            <div class="form-group">
+                <label for="sessionId">세션 ID:</label>
+                <input type="text" id="sessionId" placeholder="로그인 후 자동으로 설정됩니다">
+            </div>
+            <div class="form-group">
+                <label>문제 선택:</label>
+                <div class="buttons">
+                    <button id="question1">문제 1</button>
+                    <button id="question2">문제 2</button>
+                    <button id="question3">문제 3</button>
+                </div>
+            </div>
+            <div id="question-display" class="hidden">
+                <div class="form-group">
+                    <label for="questionText">선택된 문제:</label>
+                    <textarea id="questionText" readonly></textarea>
+                </div>
+                <div class="form-group">
+                    <label>응답 선택:</label>
+                    <div class="buttons">
+                        <button id="answer-true">O</button>
+                        <button id="answer-false">X</button>
+                    </div>
+                </div>
+            </div>
+            <div id="question-result" class="result hidden"></div>
+            <div id="question-error" class="error hidden"></div>
+        </div>
+        
+        <div class="section">
+            <h2>3. 복습 컨텐츠 요청 테스트</h2>
+            <div class="form-group">
+                <label for="review-sessionId">세션 ID:</label>
+                <input type="text" id="review-sessionId" placeholder="로그인 후 자동으로 설정됩니다">
+            </div>
+            <button id="btn-review">복습 컨텐츠 요청</button>
+            <div id="review-result" class="result hidden"></div>
+            <div id="review-error" class="error hidden"></div>
+        </div>
+        
+        <div class="section">
+            <h2>4. 게임 완료 테스트</h2>
+            <div class="form-group">
+                <label for="complete-sessionId">세션 ID:</label>
+                <input type="text" id="complete-sessionId" placeholder="로그인 후 자동으로 설정됩니다">
+            </div>
+            <div class="form-group">
+                <label for="completionTime">완료 시간 (초):</label>
+                <input type="text" id="completionTime" value="300">
+            </div>
+            <button id="btn-complete">게임 완료</button>
+            <div id="complete-result" class="result hidden"></div>
+            <div id="complete-error" class="error hidden"></div>
+        </div>
+    </div>
+
+    <script>
+        // 전역 변수
+        let currentSessionId = '';
+        let questions = [
+            {
+                id: 1,
+                question: "화성은 태양에서 네 번째 행성이다.",
+                explanation: "화성은 태양에서 네 번째로 가까운 행성입니다.",
+                correctAnswer: true
+            },
+            {
+                id: 2,
+                question: "화성의 표면이 붉은 이유는 산화철 때문이다.",
+                explanation: "화성의 표면은 산화철(녹) 때문에 붉게 보입니다.",
+                correctAnswer: true
+            },
+            {
+                id: 3,
+                question: "화성의 위성은 두 개이다.",
+                explanation: "화성에는 포보스와 데이모스라는 두 개의 위성이 있습니다.",
+                correctAnswer: true
+            }
+        ];
+        let currentQuestion = null;
+
+        // DOM 요소
+        const loginBtn = document.getElementById('btn-login');
+        const usernameInput = document.getElementById('username');
+        const passwordInput = document.getElementById('password');
+        const loginResult = document.getElementById('login-result');
+        const loginError = document.getElementById('login-error');
+        
+        const sessionIdInput = document.getElementById('sessionId');
+        const question1Btn = document.getElementById('question1');
+        const question2Btn = document.getElementById('question2');
+        const question3Btn = document.getElementById('question3');
+        const questionDisplay = document.getElementById('question-display');
+        const questionText = document.getElementById('questionText');
+        const answerTrueBtn = document.getElementById('answer-true');
+        const answerFalseBtn = document.getElementById('answer-false');
+        const questionResult = document.getElementById('question-result');
+        const questionError = document.getElementById('question-error');
+        
+        const reviewSessionIdInput = document.getElementById('review-sessionId');
+        const reviewBtn = document.getElementById('btn-review');
+        const reviewResult = document.getElementById('review-result');
+        const reviewError = document.getElementById('review-error');
+        
+        const completeSessionIdInput = document.getElementById('complete-sessionId');
+        const completionTimeInput = document.getElementById('completionTime');
+        const completeBtn = document.getElementById('btn-complete');
+        const completeResult = document.getElementById('complete-result');
+        const completeError = document.getElementById('complete-error');
+
+        // API 서버 URL
+        const apiUrl = window.location.origin; // 현재 서버 URL
+
+        // 유틸리티 함수
+        function hideElement(element) {
+            element.classList.add('hidden');
+        }
+
+        function showElement(element) {
+            element.classList.remove('hidden');
+        }
+
+        function updateSessionIds(sessionId) {
+            currentSessionId = sessionId;
+            sessionIdInput.value = sessionId;
+            reviewSessionIdInput.value = sessionId;
+            completeSessionIdInput.value = sessionId;
+        }
+
+        function formatJson(json) {
+            return JSON.stringify(json, null, 2);
+        }
+
+        // 로그인 요청
+        loginBtn.addEventListener('click', async () => {
+            const username = usernameInput.value.trim();
+            const password = passwordInput.value.trim();
+            
+            if (!username || !password) {
+                loginError.textContent = '사용자 이름과 비밀번호를 입력하세요.';
+                showElement(loginError);
+                hideElement(loginResult);
+                return;
+            }
+            
+            try {
+                loginBtn.disabled = true;
+                hideElement(loginError);
+                hideElement(loginResult);
+                
+                const response = await fetch(`${apiUrl}/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        username,
+                        password
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    loginResult.innerHTML = `
+                        <p>로그인 성공!</p>
+                        <pre>${formatJson(data)}</pre>
+                    `;
+                    showElement(loginResult);
+                    
+                    // 세션 ID 업데이트
+                    updateSessionIds(data.sessionId);
+                } else {
+                    loginError.innerHTML = `
+                        <p>로그인 실패: ${data.message || 'API 오류'}</p>
+                        <pre>${formatJson(data)}</pre>
+                    `;
+                    showElement(loginError);
+                }
+            } catch (error) {
+                loginError.textContent = `오류 발생: ${error.message}`;
+                showElement(loginError);
+            } finally {
+                loginBtn.disabled = false;
+            }
+        });
+
+        // 문제 선택
+        function setupQuestionButtons() {
+            question1Btn.addEventListener('click', () => showQuestion(0));
+            question2Btn.addEventListener('click', () => showQuestion(1));
+            question3Btn.addEventListener('click', () => showQuestion(2));
+        }
+
+        function showQuestion(index) {
+            if (index < 0 || index >= questions.length) return;
+            
+            currentQuestion = questions[index];
+            questionText.value = currentQuestion.question;
+            showElement(questionDisplay);
+            hideElement(questionResult);
+            hideElement(questionError);
+        }
+
+        // 문제 응답
+        function setupAnswerButtons() {
+            answerTrueBtn.addEventListener('click', () => submitAnswer(true));
+            answerFalseBtn.addEventListener('click', () => submitAnswer(false));
+        }
+
+        async function submitAnswer(userAnswer) {
+            if (!currentQuestion) {
+                questionError.textContent = '문제를 먼저 선택하세요.';
+                showElement(questionError);
+                return;
+            }
+            
+            const sessionId = sessionIdInput.value.trim();
+            if (!sessionId) {
+                questionError.textContent = '세션 ID가 필요합니다. 먼저 로그인하세요.';
+                showElement(questionError);
+                return;
+            }
+            
+            const isCorrect = userAnswer === currentQuestion.correctAnswer;
+            
+            try {
+                answerTrueBtn.disabled = true;
+                answerFalseBtn.disabled = true;
+                hideElement(questionError);
+                hideElement(questionResult);
+                
+                const response = await fetch(`${apiUrl}/question/${sessionId}/response`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        questionNumber: currentQuestion.id,
+                        questionText: currentQuestion.question,
+                        userAnswer: userAnswer ? 'O' : 'X',
+                        correct: isCorrect
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    questionResult.innerHTML = `
+                        <p>응답이 성공적으로 저장되었습니다.</p>
+                        <p>선택: ${userAnswer ? 'O' : 'X'}, 정답 여부: ${isCorrect ? '정답' : '오답'}</p>
+                        <pre>${formatJson(data)}</pre>
+                    `;
+                    showElement(questionResult);
+                } else {
+                    questionError.innerHTML = `
+                        <p>응답 저장 실패: ${data.message || 'API 오류'}</p>
+                        <pre>${formatJson(data)}</pre>
+                    `;
+                    showElement(questionError);
+                }
+            } catch (error) {
+                questionError.textContent = `오류 발생: ${error.message}`;
+                showElement(questionError);
+            } finally {
+                answerTrueBtn.disabled = false;
+                answerFalseBtn.disabled = false;
+            }
+        }
+
+        // 복습 컨텐츠 요청
+        reviewBtn.addEventListener('click', async () => {
+            const sessionId = reviewSessionIdInput.value.trim();
+            
+            if (!sessionId) {
+                reviewError.textContent = '세션 ID가 필요합니다. 먼저 로그인하세요.';
+                showElement(reviewError);
+                return;
+            }
+            
+            try {
+                reviewBtn.disabled = true;
+                hideElement(reviewError);
+                hideElement(reviewResult);
+                
+                const response = await fetch(`${apiUrl}/game/${sessionId}/review`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    let resultHtml = `<p>복습 컨텐츠 수신 성공!</p>`;
+                    
+                    if (data.incorrectQuestions && data.incorrectQuestions.length > 0) {
+                        resultHtml += `<p>틀린 문제:</p><ul>`;
+                        data.incorrectQuestions.forEach(q => {
+                            resultHtml += `<li>${q}</li>`;
+                        });
+                        resultHtml += `</ul>`;
+                    } else {
+                        resultHtml += `<p>모든 문제를 맞혔습니다!</p>`;
+                    }
+                    
+                    if (data.reviewContent && data.reviewContent.explanations) {
+                        resultHtml += `<p>복습 컨텐츠:</p>`;
+                        resultHtml += `<pre>${data.reviewContent.explanations}</pre>`;
+                    }
+                    
+                    resultHtml += `<p>전체 응답:</p><pre>${formatJson(data)}</pre>`;
+                    
+                    reviewResult.innerHTML = resultHtml;
+                    showElement(reviewResult);
+                } else {
+                    reviewError.innerHTML = `
+                        <p>복습 컨텐츠 요청 실패: ${data.message || 'API 오류'}</p>
+                        <pre>${formatJson(data)}</pre>
+                    `;
+                    showElement(reviewError);
+                }
+            } catch (error) {
+                reviewError.textContent = `오류 발생: ${error.message}`;
+                showElement(reviewError);
+            } finally {
+                reviewBtn.disabled = false;
+            }
+        });
+
+        // 게임 완료
+        completeBtn.addEventListener('click', async () => {
+            const sessionId = completeSessionIdInput.value.trim();
+            const completionTime = parseInt(completionTimeInput.value.trim());
+            
+            if (!sessionId) {
+                completeError.textContent = '세션 ID가 필요합니다. 먼저 로그인하세요.';
+                showElement(completeError);
+                return;
+            }
+            
+            if (isNaN(completionTime) || completionTime <= 0) {
+                completeError.textContent = '유효한 완료 시간(초)을 입력하세요.';
+                showElement(completeError);
+                return;
+            }
+            
+            try {
+                completeBtn.disabled = true;
+                hideElement(completeError);
+                hideElement(completeResult);
+                
+                const response = await fetch(`${apiUrl}/game/${sessionId}/complete`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        completionTime
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    completeResult.innerHTML = `
+                        <p>게임 완료 처리 성공!</p>
+                        <p>점수: ${data.score}, 정답 수: ${data.correctAnswers}/${data.totalQuestions}</p>
+                        <pre>${formatJson(data)}</pre>
+                    `;
+                    showElement(completeResult);
+                } else {
+                    completeError.innerHTML = `
+                        <p>게임 완료 처리 실패: ${data.message || 'API 오류'}</p>
+                        <pre>${formatJson(data)}</pre>
+                    `;
+                    showElement(completeError);
+                }
+            } catch (error) {
+                completeError.textContent = `오류 발생: ${error.message}`;
+                showElement(completeError);
+            } finally {
+                completeBtn.disabled = false;
+            }
+        });
+
+        // 초기화
+        function init() {
+            setupQuestionButtons();
+            setupAnswerButtons();
+        }
+
+        // 페이지 로드 시 초기화
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
