@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>화성 게임 - AI 연동 테스트</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        h1 {
+            color: #333;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+        .card {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        textarea {
+            height: 100px;
+            resize: vertical;
+        }
+        #result {
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            white-space: pre-wrap;
+            min-height: 100px;
+        }
+        #rawResponse {
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            white-space: pre-wrap;
+            min-height: 100px;
+            overflow-x: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .explanation {
+            background-color: #f0f8ff;
+            padding: 10px;
+            border-left: 4px solid #1e90ff;
+            margin-bottom: 20px;
+        }
+        .status {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 3px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .info {
+            display: block;
+            margin-top: 10px;
+            font-size: 12px;
+            color: #666;
+        }
+        .config-panel {
+            margin-bottom: 20px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+        .url-config {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .url-config label {
+            flex: 0 0 100px;
+        }
+        .url-config input {
+            flex: 1;
+        }
+        .loader {
+            display: inline-block;
+            border: 3px solid #f3f3f3;
+            border-radius: 50%;
+            border-top: 3px solid #3498db;
+            width: 16px;
+            height: 16px;
+            animation: spin 1s linear infinite;
+            margin-left: 10px;
+            vertical-align: middle;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .tab-container {
+            display: flex;
+            margin-bottom: 10px;
+        }
+        .tab {
+            padding: 8px 16px;
+            border: 1px solid #ddd;
+            border-bottom: none;
+            border-radius: 4px 4px 0 0;
+            cursor: pointer;
+            background-color: #f8f9fa;
+        }
+        .tab.active {
+            background-color: #fff;
+            border-bottom: 1px solid #fff;
+            position: relative;
+            z-index: 1;
+        }
+        .tab-content {
+            display: none;
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 0 4px 4px 4px;
+            margin-top: -1px;
+        }
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <h1>화성 게임 - AI 연동 테스트</h1>
+    
+    <div class="explanation">
+        <p>이 페이지는 백엔드와 AI 서버 간의 연결을 테스트하기 위한 도구입니다. 
+        AI 서버 URL이 application.yml에 올바르게 설정되어 있어야 합니다.</p>
+        <p>현재 설정된 AI 서버: <code>http://172.16.16.169:8011</code></p>
+        <p>API 엔드포인트: <code>/questions</code></p>
+    </div>
+
+    <div class="config-panel">
+        <h3>서버 상태 확인</h3>
+        <div>
+            <button id="checkBackendBtn">백엔드 서버 연결 확인</button>
+            <div id="backendStatus"></div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>1. AI 서버 연결 테스트</h2>
+        <p>AI 서버와의 기본 연결을 테스트합니다.</p>
+        <button id="testConnectionBtn">AI 서버 연결 테스트</button>
+        <div id="connectionResult" style="margin-top: 10px;"></div>
+    </div>
+
+    <div class="card">
+        <h2>2. 복습 컨텐츠 생성 테스트</h2>
+        <p>틀린 문제 목록을 보내고 AI가 생성한 복습 컨텐츠를 받습니다.</p>
+        
+        <div>
+            <label for="question1">틀린 문제 1:</label>
+            <input type="text" id="question1" value="화성은 태양에서 네 번째 행성이다.">
+        </div>
+        
+        <div>
+            <label for="question2">틀린 문제 2:</label>
+            <input type="text" id="question2" value="화성의 표면이 붉은 이유는 산화철 때문이다.">
+        </div>
+        
+        <div>
+            <label for="question3">틀린 문제 3:</label>
+            <input type="text" id="question3" value="화성의 위성은 두 개이다.">
+        </div>
+        
+        <button id="testReviewBtn" style="margin-top: 10px;">복습 컨텐츠 생성 테스트</button>
+        <span id="reviewLoader" class="loader" style="display: none;"></span>
+        
+        <div class="tab-container" style="margin-top: 20px;">
+            <div class="tab active" data-tab="formatted">구조화된 결과</div>
+            <div class="tab" data-tab="raw">원시 응답</div>
+        </div>
+        
+        <div id="formatted-tab" class="tab-content active">
+            <h3>결과:</h3>
+            <div id="result"></div>
+        </div>
+        
+        <div id="raw-tab" class="tab-content">
+            <h3>원시 응답:</h3>
+            <pre id="rawResponse"></pre>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>3. AI API 문서 확인</h3>
+        <p>AI 팀의 Swagger UI를 통해 API 문서를 확인할 수 있습니다.</p>
+        <a href="http://172.16.16.169:8011/docs" target="_blank">AI 팀 Swagger UI 열기</a>
+    </div>
+
+    <div class="card">
+        <h3>4. 백엔드 Swagger UI</h3>
+        <p>백엔드 API 문서를 확인할 수 있습니다.</p>
+        <a href="/swagger-ui.html" target="_blank">백엔드 Swagger UI 열기</a>
+    </div>
+
+    <script>
+        // 탭 기능
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                const tabId = this.getAttribute('data-tab');
+                
+                // 모든 탭 비활성화
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                
+                // 선택한 탭 활성화
+                this.classList.add('active');
+                document.getElementById(tabId + '-tab').classList.add('active');
+            });
+        });
+    
+        document.getElementById('checkBackendBtn').addEventListener('click', async function() {
+            const statusDiv = document.getElementById('backendStatus');
+            statusDiv.innerHTML = '<div class="loader"></div> 백엔드 서버 접속 중...';
+            
+            try {
+                const response = await fetch('/api-test/ping');
+                const data = await response.text();
+                
+                statusDiv.innerHTML = '<span class="status success">성공</span> ' + data;
+            } catch (error) {
+                statusDiv.innerHTML = '<span class="status error">실패</span> 백엔드 서버 접속 실패: ' + error.message;
+            }
+        });
+
+        document.getElementById('testConnectionBtn').addEventListener('click', async function() {
+            const resultDiv = document.getElementById('connectionResult');
+            resultDiv.innerHTML = '<div class="loader"></div> AI 서버 연결 테스트 중...';
+            
+            try {
+                const response = await fetch('/api-test/ai-connection');
+                const data = await response.text();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = '<span class="status success">성공</span> ' + data.replace(/\n/g, '<br>');
+                } else {
+                    resultDiv.innerHTML = '<span class="status error">실패</span> ' + data.replace(/\n/g, '<br>');
+                }
+            } catch (error) {
+                resultDiv.innerHTML = '<span class="status error">실패</span> 오류 발생: ' + error.message;
+            }
+        });
+
+        document.getElementById('testReviewBtn').addEventListener('click', async function() {
+            const resultDiv = document.getElementById('result');
+            const rawResponseDiv = document.getElementById('rawResponse');
+            const loader = document.getElementById('reviewLoader');
+            
+            resultDiv.innerHTML = "복습 컨텐츠 생성 중...";
+            rawResponseDiv.innerHTML = "응답 대기 중...";
+            loader.style.display = 'inline-block';
+            
+            // 입력된 문제 수집 (빈 문제는 제외)
+            const incorrectQuestions = [];
+            for (let i = 1; i <= 3; i++) {
+                const question = document.getElementById(`question${i}`).value.trim();
+                if (question) {
+                    incorrectQuestions.push(question);
+                }
+            }
+            
+            if (incorrectQuestions.length === 0) {
+                resultDiv.innerHTML = "최소 하나 이상의 문제를 입력해주세요.";
+                rawResponseDiv.innerHTML = "";
+                loader.style.display = 'none';
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api-test/ai-review', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        incorrectQuestions: incorrectQuestions
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP 오류: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                // 원시 응답 표시
+                rawResponseDiv.innerHTML = JSON.stringify(data, null, 2);
+                
+                // 결과 표시
+                let resultHtml = "<h4>AI 응답:</h4>";
+                
+                // 설명 목록 표시
+                if (data.explanations && data.explanations.length > 0) {
+                    resultHtml += "<h5>설명:</h5>";
+                    data.explanations.forEach((explanation, index) => {
+                        resultHtml += `<div style="margin-bottom: 10px;"><strong>문제 ${index + 1}:</strong> ${incorrectQuestions[index]}</div>`;
+                        resultHtml += `<div style="background-color: #f5f5f5; padding: 10px; margin-bottom: 15px;">${explanation}</div>`;
+                    });
+                } else {
+                    resultHtml += "<p>설명이 제공되지 않았습니다. API 응답 형식을 확인하세요.</p>";
+                }
+                
+                // 요약 표시
+                if (data.summary) {
+                    resultHtml += "<h5>요약:</h5>";
+                    resultHtml += `<div style="background-color: #f5f5f5; padding: 10px;">${data.summary}</div>`;
+                } else {
+                    resultHtml += "<p>요약이 제공되지 않았습니다.</p>";
+                }
+                
+                // 추가 데이터 표시
+                if (data.additionalData && Object.keys(data.additionalData).length > 0) {
+                    resultHtml += "<h5>추가 데이터:</h5>";
+                    resultHtml += `<pre style="background-color: #f5f5f5; padding: 10px;">${JSON.stringify(data.additionalData, null, 2)}</pre>`;
+                }
+                
+                resultDiv.innerHTML = resultHtml;
+            } catch (error) {
+                resultDiv.innerHTML = "오류 발생: " + error.message;
+                rawResponseDiv.innerHTML = "오류: " + error.message;
+            } finally {
+                loader.style.display = 'none';
+            }
+        });
+        
+        // 페이지 로드 시 자동으로 백엔드 연결 확인
+        window.addEventListener('load', function() {
+            document.getElementById('checkBackendBtn').click();
+        });
+    </script>
+</body>
+</html>
