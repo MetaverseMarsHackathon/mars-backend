@@ -1,0 +1,50 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:mars-game-db
+    driver-class-name: org.h2.Driver
+    username: ${DB_USERNAME:sa}
+    password: ${DB_PASSWORD:}
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: create
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+      settings:
+        web-allow-others: true
+
+server:
+  port: ${SERVER_PORT:8081}
+  address: 0.0.0.0
+  # context-path를 주석 처리하여 루트에서 실행
+  # servlet:
+  #   context-path: /api
+
+# AI 서버 설정 - AI 팀에서 제공한 실제 주소는 환경변수로 관리
+ai:
+  server:
+    url: ${AI_SERVER_URL:http://localhost:8011}
+
+# 로깅 설정
+logging:
+  level:
+    root: ${LOG_LEVEL:INFO}
+    org.springframework.security: INFO
+    org.springframework.web: INFO
+    com.hackathon.marsgame: DEBUG
+    # WebClient의 로그 레벨을 높여 API 요청/응답 상세 내용 확인
+    org.springframework.web.reactive.function.client.ExchangeFunctions: TRACE
+
+# Swagger UI 구성
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    default-models-expand-depth: -1
+  api-docs:
+    path: /api-docs
